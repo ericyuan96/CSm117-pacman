@@ -13,13 +13,10 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
     }
 
-    /** Called when the user clicks the Send button */
+    //called after clicking the "show map" button, starts a new Google Maps intent
     public void displayMap(View view) {
 
         Intent intent = new Intent(this, MapsActivity.class);
-        //EditText editText = (EditText) findViewById(R.id.edit_message);
-        //String message = editText.getText().toString();
-        //intent.putExtra(EXTRA_MESSAGE, message);
         startActivity(intent);
     }
 }
