@@ -1,6 +1,7 @@
 package com.example.ericyuan.googlemaptest;
 
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.location.Location;
 import android.os.Build;
 import android.os.StrictMode;
@@ -28,12 +29,9 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -41,7 +39,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
 
 
 ////////////////////////////////////////////////////////////////////////
@@ -60,6 +57,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         GoogleApiClient.OnConnectionFailedListener,
         LocationListener
 {
+    private static final String TAG = MapsActivity.class.getSimpleName();
 
     private GoogleMap mMap;
 
@@ -96,7 +94,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     @Override
     public void onMapReady(GoogleMap googleMap) {
+        /*try {
+            // Customise the styling of the base map using a JSON object defined
+            // in a raw resource file.
+            boolean success = googleMap.setMapStyle(
+                    MapStyleOptions.loadRawResourceStyle(
+                            this, R.raw.style_json));
 
+            if (!success) {
+                Log.e(TAG, "Style parsing failed.");
+            }
+        } catch (Resources.NotFoundException e) {
+            Log.e(TAG, "Can't find style. Error: ", e);
+        }*/
         mMap = googleMap;
 
         //Initialize Google Play Services
@@ -112,11 +122,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             buildGoogleApiClient();
             mMap.setMyLocationEnabled(true);
         }
-
+        //SETS COLOR
+        boolean success = googleMap.setMapStyle(
+                MapStyleOptions.loadRawResourceStyle(
+                        this, R.raw.style_json));
+        /*
         // Instantiates a new CircleOptions object and defines the center and radius
-        /*CircleOptions circleOptions = new CircleOptions()
-                .center(new LatLng(34.1, -118.4))
-                .radius(1000); // In meters
+        CircleOptions circleOptions = new CircleOptions()
+                .center(new LatLng(mLocation.getLatitude() + .000001, mLastLocation.getLongitude()))
+                .radius(1); // In meters
 
         // Get back the mutable Circle
         Circle circle = mMap.addCircle(circleOptions);*/
@@ -124,34 +138,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         String points="points=34.1,-118.4|35.1,-117.4";
         String url = "https://roads.googleapis.com/v1/nearestRoads?" + points + "&key=" + "AIzaSyDPyt3wOffBv5jmCcqjuwwF15TXDfeuRD4";
-        String response = "";
 
         Log.d("request", url);
         try {
-            response = HTTPRequest( url );
+            HTTPRequest( url );
         }
         catch(IOException e)
         {}
 
-        Log.d("response", response);
-
-
-        //convert the response to a JSON
-        ArrayList<String> locations = new ArrayList<String>();
-        try {
-            locations = parseJSON(response);
-        }
-        catch (JSONException j)
-        {
-            Log.d("exception", "JSON exception");
-        }
-
-        Log.d("size", Integer.toString( locations.size()) );
-
-        for (String s:locations)
-        {
-            Log.d( "locations", s);
-        }
 
     }
 
@@ -177,7 +171,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         } finally {
             urlConnection.disconnect();
         }
-
+        Log.d("response", result);
         return result;
     }
 
@@ -194,30 +188,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         } catch (IOException e) {
             return "";
         }
-    }
-
-    //parses the JSON returned by nearest roads api utility
-    public ArrayList<String> parseJSON(String JSONstring) throws JSONException
-    {
-        Log.d("label", "parsing JSON");
-
-        ArrayList locations = new ArrayList<String>();
-
-        JSONObject obj = new JSONObject( JSONstring);
-        JSONArray list = obj.getJSONArray("snappedPoints");
-
-
-        Log.d("label", "parsing 2");
-        Log.d( "jsonlength", Integer.toString(list.length()) );
-        for (int i=0; i<list.length();i++)
-        {
-            String lat = list.getJSONObject(i).getJSONObject("location").getString("latitude");
-            String lon = list.getJSONObject(i).getJSONObject("location").getString("longitude");
-            locations.add(lat);
-            locations.add(lon);
-        }
-
-        return locations;
     }
 
 
