@@ -3,6 +3,7 @@ package com.example.ericyuan.googlemaptest;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Build;
+import android.os.StrictMode;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
@@ -10,6 +11,8 @@ import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.Manifest;
+import android.util.Log;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -22,9 +25,18 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 
 ////////////////////////////////////////////////////////////////////////
@@ -95,7 +107,70 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             buildGoogleApiClient();
             mMap.setMyLocationEnabled(true);
         }
+
+        // Instantiates a new CircleOptions object and defines the center and radius
+        /*CircleOptions circleOptions = new CircleOptions()
+                .center(new LatLng(34.1, -118.4))
+                .radius(1000); // In meters
+
+        // Get back the mutable Circle
+        Circle circle = mMap.addCircle(circleOptions);*/
+
+
+        String points="points=34.1,-118.4|35.1,-117.4";
+        String url = "https://roads.googleapis.com/v1/nearestRoads?" + points + "&key=" + "AIzaSyDPyt3wOffBv5jmCcqjuwwF15TXDfeuRD4";
+
+        Log.d("request", url);
+        try {
+            HTTPRequest( url );
+        }
+        catch(IOException e)
+        {}
+
+
     }
+
+    //send http requests for google maps
+    public String HTTPRequest( String url_string ) throws IOException
+    {
+        //use this since you can't do network tasks in main thread
+        //may be a jank fix but whatevers
+        if (android.os.Build.VERSION.SDK_INT > 9)
+        {
+            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+            StrictMode.setThreadPolicy(policy);
+        }
+
+        URL url = new URL(url_string);
+
+        String result;
+
+        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+        try {
+            InputStream in = new BufferedInputStream(urlConnection.getInputStream());
+            result = readStream(in);
+        } finally {
+            urlConnection.disconnect();
+        }
+        Log.d("response", result);
+        return result;
+    }
+
+    //read the input stream from http requests
+    private String readStream(InputStream is) {
+        try {
+            ByteArrayOutputStream bo = new ByteArrayOutputStream();
+            int i = is.read();
+            while(i != -1) {
+                bo.write(i);
+                i = is.read();
+            }
+            return bo.toString();
+        } catch (IOException e) {
+            return "";
+        }
+    }
+
 
     protected synchronized void buildGoogleApiClient() {
         mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -128,7 +203,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onLocationChanged(Location location) {
-
         mLastLocation = location;
         if (mCurrLocationMarker != null) {
             mCurrLocationMarker.remove();
