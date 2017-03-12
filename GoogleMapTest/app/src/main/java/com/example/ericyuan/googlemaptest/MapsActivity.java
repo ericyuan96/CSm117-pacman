@@ -31,12 +31,17 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 
 
 ////////////////////////////////////////////////////////////////////////
@@ -119,14 +124,34 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         String points="points=34.1,-118.4|35.1,-117.4";
         String url = "https://roads.googleapis.com/v1/nearestRoads?" + points + "&key=" + "AIzaSyDPyt3wOffBv5jmCcqjuwwF15TXDfeuRD4";
+        String response = "";
 
         Log.d("request", url);
         try {
-            HTTPRequest( url );
+            response = HTTPRequest( url );
         }
         catch(IOException e)
         {}
 
+        Log.d("response", response);
+
+
+        //convert the response to a JSON
+        ArrayList<String> locations = new ArrayList<String>();
+        try {
+            locations = parseJSON(response);
+        }
+        catch (JSONException j)
+        {
+            Log.d("exception", "JSON exception");
+        }
+
+        Log.d("size", Integer.toString( locations.size()) );
+
+        for (String s:locations)
+        {
+            Log.d( "locations", s);
+        }
 
     }
 
@@ -152,7 +177,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         } finally {
             urlConnection.disconnect();
         }
-        Log.d("response", result);
+
         return result;
     }
 
@@ -169,6 +194,30 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         } catch (IOException e) {
             return "";
         }
+    }
+
+    //parses the JSON returned by nearest roads api utility
+    public ArrayList<String> parseJSON(String JSONstring) throws JSONException
+    {
+        Log.d("label", "parsing JSON");
+
+        ArrayList locations = new ArrayList<String>();
+
+        JSONObject obj = new JSONObject( JSONstring);
+        JSONArray list = obj.getJSONArray("snappedPoints");
+
+
+        Log.d("label", "parsing 2");
+        Log.d( "jsonlength", Integer.toString(list.length()) );
+        for (int i=0; i<list.length();i++)
+        {
+            String lat = list.getJSONObject(i).getJSONObject("location").getString("latitude");
+            String lon = list.getJSONObject(i).getJSONObject("location").getString("longitude");
+            locations.add(lat);
+            locations.add(lon);
+        }
+
+        return locations;
     }
 
 
