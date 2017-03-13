@@ -39,7 +39,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-
+import java.util.ArrayList;
 
 ////////////////////////////////////////////////////////////////////////
 //
@@ -57,6 +57,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         GoogleApiClient.OnConnectionFailedListener,
         LocationListener
 {
+    int circleFlag = 0;
+    ArrayList<Circle> circles = new ArrayList<Circle>();
+    int numcircles = 0;
+    int count = 0;
     private static final String TAG = MapsActivity.class.getSimpleName();
 
     private GoogleMap mMap;
@@ -107,6 +111,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         } catch (Resources.NotFoundException e) {
             Log.e(TAG, "Can't find style. Error: ", e);
         }*/
+
         mMap = googleMap;
 
         //Initialize Google Play Services
@@ -135,7 +140,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         // Get back the mutable Circle
         Circle circle = mMap.addCircle(circleOptions);*/
 
+        //****CIRCLE CODE****
+        for (int i = 0; i < 5; i++) {
+            CircleOptions circleOptions = new CircleOptions()
+                    .center(new LatLng(34.0689313 + (.0001*i), -118.4426616))
+                    .radius(10).fillColor(0xffffe5ee).strokeColor(0xfffff0f0); // In meters
 
+            circles.add(mMap.addCircle(circleOptions));
+            numcircles += 1;
+        }
+
+
+        //****END****
         String points="points=34.1,-118.4|35.1,-117.4";
         String url = "https://roads.googleapis.com/v1/nearestRoads?" + points + "&key=" + "AIzaSyDPyt3wOffBv5jmCcqjuwwF15TXDfeuRD4";
 
@@ -204,9 +220,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onConnected(@Nullable Bundle bundle) {
 
         mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(1000);
-        mLocationRequest.setFastestInterval(1000);
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+        mLocationRequest.setInterval(5);
+        mLocationRequest.setFastestInterval(5);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
@@ -222,6 +238,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onLocationChanged(Location location) {
+        /*count++;
+        Log.d("LOCATION COUNT", String.valueOf(count));*/
+
         mLastLocation = location;
         if (mCurrLocationMarker != null) {
             mCurrLocationMarker.remove();
@@ -232,17 +251,43 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(latLng);
         markerOptions.title("Current Position");
-        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
+        //markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
+        markerOptions.icon(BitmapDescriptorFactory.fromResource(R.raw.pacman_bits2));
         mCurrLocationMarker = mMap.addMarker(markerOptions);
 
         //move map camera
         mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-        mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
+        mMap.animateCamera(CameraUpdateFactory.zoomTo(19));
+
+        //circle hit
+        /*if (Math.abs(mLastLocation.getLatitude() - circles.get(0).getCenter().latitude) < .0001
+                && Math.abs(mLastLocation.getLongitude() - circles.get(0).getCenter().longitude) < .0001)
+            circles.get(0).remove();*/
+
+        Location myLocation = new Location("");
+        myLocation.setLatitude(mCurrLocationMarker.getPosition().latitude);
+        myLocation.setLongitude(mCurrLocationMarker.getPosition().longitude);
+
+
+        //Log.d( Double.toString( myLocation.getLatitude() ) );
+        //Log.d( "lat", String.valueOf( myLocation.getLatitude() ) );
+        //Log.d( "long", String.valueOf( myLocation.getLongitude() ) );
+
+        Location circLocation = new Location("");
+        for (int j = 0; j < numcircles; j++) {
+            circLocation.setLatitude(circles.get(j).getCenter().latitude);
+            circLocation.setLongitude(circles.get(j).getCenter().longitude);
+            if (myLocation.distanceTo(circLocation) < 10) {
+                //circles.set(0, null);
+                circles.get(j).remove();
+            }
+        }
+
 
         //stop location updates
-        if (mGoogleApiClient != null) {
+        /*if (mGoogleApiClient != null) {
             LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
-        }
+        }*/
     }
 
     @Override
