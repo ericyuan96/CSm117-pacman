@@ -23,16 +23,29 @@
         android:onClick="displayMap"
         android:layout_row="10"
         android:layout_column="0"
-        android:layout_centerVertical="true"
+        android:id="@+id/button"
+        android:layout_below="@+id/textView"
         android:layout_centerHorizontal="true"
-        android:id="@+id/button" />
+        android:layout_marginTop="55dp" />
 
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/imageView2"
             android:src="@mipmap/pacman_bits3"
-            android:scaleType="fitCenter" />
+            android:scaleType="fitCenter"
+            android:minHeight="200dp"
+            android:minWidth="200dp"
+            android:layout_centerHorizontal="true"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="GPS Pacman"
+            android:id="@+id/textView"
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true" />
     </RelativeLayout>
 
     <LinearLayout

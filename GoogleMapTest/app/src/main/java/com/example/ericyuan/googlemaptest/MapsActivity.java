@@ -1,7 +1,9 @@
 package com.example.ericyuan.googlemaptest;
 
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.graphics.Color;
 import android.location.Location;
 import android.os.Build;
 import android.os.StrictMode;
@@ -13,6 +15,7 @@ import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.Manifest;
 import android.util.Log;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -40,6 +43,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 ////////////////////////////////////////////////////////////////////////
 //
@@ -69,6 +73,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     LocationRequest mLocationRequest;
     Location mLastLocation;
     Marker mCurrLocationMarker;
+
+    int distanceFlag = 0;
+    int distanceTraveled = 0;
+
+    int scoreValue = 0;
+    TextView distance;
+    TextView score;
+
+    static int timer = 60;
+    TextView time;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -150,6 +164,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             numcircles += 1;
         }
 
+        //****display distance****
+        distance = (TextView)findViewById(R.id.distance);
+        distance.setTextColor(Color.WHITE);
+        distance.setText("Distance: 0m");
+
+        //****score****
+        score = (TextView)findViewById(R.id.score);
+        score.setTextColor(Color.WHITE);
+        score.setText("Score: 0");
 
         //****END****
         String points="points=34.1,-118.4|35.1,-117.4";
@@ -162,7 +185,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         catch(IOException e)
         {}
 
+        //****timer****
+        /*time = (TextView)findViewById(R.id.time);
+        distance.setTextColor(Color.WHITE);
 
+        while (true) {
+            timer--;
+            distance.setText("Time: "+timer+"s");
+            if (timer == 0) {
+                Intent i = new Intent(this, EndActivity.class);
+                startActivity(i);
+            }
+
+            try {
+                Thread.sleep(1000);
+            }
+            catch(InterruptedException ex){
+                Thread.currentThread().interrupt();
+            }
+        }*/
     }
 
     //send http requests for google maps
@@ -240,6 +281,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onLocationChanged(Location location) {
         /*count++;
         Log.d("LOCATION COUNT", String.valueOf(count));*/
+        if (distanceFlag > 0){
+            distanceTraveled += mLastLocation.distanceTo(location);
+            distance.setText("Distance: " + Integer.toString(distanceTraveled) + "m");
+        }
+        else
+            distanceFlag++;
 
         mLastLocation = location;
         if (mCurrLocationMarker != null) {
@@ -252,7 +299,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         markerOptions.position(latLng);
         markerOptions.title("Current Position");
         //markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
-        markerOptions.icon(BitmapDescriptorFactory.fromResource(R.raw.pacman_bits2));
+        markerOptions.icon(BitmapDescriptorFactory.fromResource(R.raw.pacman));
         mCurrLocationMarker = mMap.addMarker(markerOptions);
 
         //move map camera
@@ -280,6 +327,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             if (myLocation.distanceTo(circLocation) < 10) {
                 //circles.set(0, null);
                 circles.get(j).remove();
+                scoreValue = (numcircles - circles.size()) * 100;
+                score.setText("Score: "+scoreValue);
             }
         }
 
@@ -360,5 +409,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             // other 'case' lines to check for other permissions this app might request.
             //You can add here other case statements according to your requirement.
         }
+    }
+    public void endScreen(View view){
+        Intent intent = new Intent(this, EndActivity.class);
+        intent.putExtra("map.score", scoreValue);
+        intent.putExtra("map.distance", distanceTraveled);
+        startActivity(intent);
     }
 }
